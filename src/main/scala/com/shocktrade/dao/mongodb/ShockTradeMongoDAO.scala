@@ -1,19 +1,16 @@
 package com.shocktrade.dao.mongodb
 
+import com.mongodb.casbah.Imports._
+import com.mongodb.casbah.commons.conversions.scala._
+
 /**
  * ShockTrade MongoDB Data Access Object (DAO)
  * @author lawrence.daniels@gmail.com
  */
 trait ShockTradeMongoDAO {
-  import com.mongodb.casbah.commons.conversions.scala._
-  import com.mongodb.casbah.Imports._
-  import com.mongodb.casbah.Imports.{ DBObject => Q }
-  import WriteConcern.ReplicasSafe
-
   // define the connection parameters
-  protected val DATABASE_NAME = "shocktrade" // srs | shocktrade
-  protected val DEFAULT_CONCERN = WriteConcern.Safe // Safe | JournalSafe
-  
+  protected val DATABASE_NAME = "shocktrade"
+  protected val DEFAULT_CONCERN = WriteConcern.JournalSafe // Safe | JournalSafe
 
   // register the time/date helpers
   RegisterJodaTimeConversionHelpers()
@@ -31,12 +28,10 @@ trait ShockTradeMongoDAO {
 
     // create the connection
     MongoConnection(List(
-      //new ServerAddress("dev001", 27017) 
-      new ServerAddress("dev528", 27017),
-      new ServerAddress("dev601", 27017),
-      new ServerAddress("dev602", 27017),
-      new ServerAddress("dev603", 27017)
-      ), options)
+      new ServerAddress("dev801", 27017),
+      new ServerAddress("dev802", 27017),
+      new ServerAddress("dev803", 27017)
+    ), options)
   }
 
   /**

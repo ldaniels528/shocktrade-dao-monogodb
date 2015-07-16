@@ -1,17 +1,17 @@
 package com.shocktrade.dao.mongodb
 
+import com.mongodb.DBObject
+import com.mongodb.casbah.Imports._
 import com.shocktrade.services.util.ScalaBeanUtil
 
+import scala.collection.JavaConversions._
+import scala.util.{Failure, Success, Try}
+
 /**
- * Casbah/MongoDB Deserialization Library
+ * Casbah-MongoDB Deserialization Library
  * @author lawrence.daniels@gmail.com
  */
 object Mongoose extends ScalaBeanUtil {
-  import java.lang.reflect.{ Field, Method }
-  import scala.collection.JavaConversions._
-  import scala.util.{ Try, Success, Failure }
-  import com.mongodb.casbah.Imports._
-  import com.mongodb.casbah.Imports.{ DBObject => Q }
 
   /**
    * Creates a new case class (parameterized) instance setting its values
@@ -19,7 +19,7 @@ object Mongoose extends ScalaBeanUtil {
    */
   def extract[S](o: DBObject)(implicit m: Manifest[S]): S = {
     // get the destination class
-    val destClass = m.erasure.asInstanceOf[Class[S]]
+    val destClass = m.runtimeClass.asInstanceOf[Class[S]]
 
     // extract the bean
     extract(destClass, o)
@@ -31,14 +31,14 @@ object Mongoose extends ScalaBeanUtil {
    */
   def extract[S](destClass: Class[S], o: DBObject): S = {
     // get the source properties    
-    val srcProps = o.toMap() map { case (k, v) => (k.toString, v.asInstanceOf[Object]) }
+    val srcProps = o.toMap map { case (k, v) => (k.toString, v.asInstanceOf[Object]) }
 
     // lookup the default constructor
-    val cons = destClass.getConstructors().head
+    val cons = destClass.getConstructors.head
 
     // build the destination properties
     val destProps = extractMethods(destClass) map { m =>
-      val name = m.getName()
+      val name = m.getName
       val value = determineValue(m.getReturnType, srcProps.get(name))
       (name, value)
     }
@@ -51,7 +51,7 @@ object Mongoose extends ScalaBeanUtil {
     }
   }
 
-  private def determineValue(returnType: Class[_], value: Option[Object]): Object = {
+  private def determineValue[T](returnType: Class[T], value: Option[Object]): Object = {
     value match {
       case Some(l: BasicDBList) => getTypedArray(returnType, l)
       case Some(o: DBObject) => extract(returnType, o).asInstanceOf[Object]
@@ -62,16 +62,15 @@ object Mongoose extends ScalaBeanUtil {
 
   override protected def getTypedArray(returnType: Class[_], value: Object): Array[Any] = {
     // determine the type of the array
-    val arrayType = returnType.getComponentType()
+    val arrayType = returnType.getComponentType
 
     value match {
       // create an object array of the items in the DBList
       case l: BasicDBList =>
-        val items = (l.listIterator() map (
-          _ match {
-            case o: DBObject => extract(arrayType, o)
-            case x => getTypedValue(arrayType, x)
-          })).toArray
+        val items = (l.listIterator() map {
+          case o: DBObject => extract(arrayType, o)
+          case x => getTypedValue(arrayType, x)
+        }).toArray
         createTypedArray(arrayType, items)
 
       // allow the super-class to handle anything else
